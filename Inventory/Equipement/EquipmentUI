@@ -1,105 +1,182 @@
 using UnityEngine;
 using UnityEngine.UI;
+using TMPro;
+using UnityEngine.EventSystems;
 
-public class EquipmentUI : MonoBehaviour
+public class InventoryUI : MonoBehaviour
 {
-    // Slots pour chaque pièce d'équipement
-    public Image helmetSlot;
-    public Image chestplateSlot;
-    public Image leggingsSlot;
-    public Image weaponSlot;
-    public Image bootsSlot;
-    public GameObject equipmentPanel;
+    // Références principales
+    public Inventory inventory; // Référence à l'inventaire
+    public GameObject inventoryPanel; // Panel principal de l'inventaire
+    public Transform equipmentGrid; // Grid pour les équipements
+    public Transform resourcesGrid; // Grid pour les ressources
+    public Transform questsGrid; // Grid pour les objets de quête
+    public GameObject itemPrefab; // Préfabriqué pour afficher un objet dans l'inventaire
 
-    private CharacterEquipment characterEquipment;
-
-    void Start()
+    private void Start()
     {
-        characterEquipment = EquipmentManager.instance.GetCharacterEquipment(); // Obtenez l'instance actuelle
-        EquipmentManager.instance.OnEquipmentChanged += UpdateEquipmentUI; // Abonnez-vous aux changements
-        UpdateAllEquipmentUI(); // Met à jour tous les slots au démarrage
+        // Désactiver le panel de l'inventaire au démarrage
+        inventoryPanel.SetActive(false);
     }
 
-    public void EquipItem(string slotType, Item item)
+    /// <summary>
+    /// Met à jour l'UI de l'inventaire pour refléter son contenu actuel.
+    /// </summary>
+    public void UpdateUI()
     {
-        characterEquipment.EquipItem(slotType, item);
-        UpdateEquipmentUI(slotType, item);
-    }
+        Debug.Log("Mise à jour de l'UI de l'inventaire.");
 
-    public void UnequipItem(string slotType)
-    {
-        characterEquipment.UnequipItem(slotType);
-        UpdateEquipmentUI(slotType, null);
-        Debug.Log($"{slotType} déséquipé !");
-    }
+        // Vider les grilles existantes
+        ClearGrid(equipmentGrid);
+        ClearGrid(resourcesGrid);
+        ClearGrid(questsGrid);
 
-    private void UpdateAllEquipmentUI()
-    {
-        UpdateSlotUI(helmetSlot, characterEquipment.GetEquippedItem("Casque"));
-        UpdateSlotUI(chestplateSlot, characterEquipment.GetEquippedItem("Torse"));
-        UpdateSlotUI(leggingsSlot, characterEquipment.GetEquippedItem("Jambiere"));
-        UpdateSlotUI(weaponSlot, characterEquipment.GetEquippedItem("Arme"));
-        UpdateSlotUI(bootsSlot, characterEquipment.GetEquippedItem("Bottes"));
-    }
-
-    private void UpdateEquipmentUI(string slotType, Item item)
-    {
-        // Met à jour uniquement le slot correspondant
-        switch (slotType)
+        // Parcourir les items de l'inventaire et les afficher
+        foreach (Item item in inventory.items)
         {
-            case "Casque":
-                UpdateSlotUI(helmetSlot, item);
-                break;
-            case "Torse":
-                UpdateSlotUI(chestplateSlot, item);
-                break;
-            case "Jambiere":
-                UpdateSlotUI(leggingsSlot, item);
-                break;
-            case "Arme":
-                UpdateSlotUI(weaponSlot, item);
-                break;
-            case "Bottes":
-                UpdateSlotUI(bootsSlot, item);
-                break;
-            default:
-                Debug.LogWarning($"Slot inconnu : {slotType}");
-                break;
+            Transform targetGrid = DetermineTargetGrid(item.itemType);
+            if (targetGrid != null)
+            {
+                CreateItemUI(item, targetGrid);
+            }
         }
     }
 
-    private void UpdateSlotUI(Image slotImage, Item item)
+    /// <summary>
+    /// Détermine la grille cible en fonction du type d'item.
+    /// </summary>
+    private Transform DetermineTargetGrid(ItemType itemType)
     {
-        if (item != null)
+        return itemType switch
         {
-            slotImage.sprite = item.itemIcon; // Affiche l'icône de l'objet
-            slotImage.color = Color.white;   // Rendre l'image visible
+            ItemType.Equipment => equipmentGrid,
+            ItemType.Resource => resourcesGrid,
+            ItemType.QuestItem => questsGrid,
+            _ => null
+        };
+    }
+
+    /// <summary>
+    /// Crée un élément visuel dans l'UI pour un item donné.
+    /// </summary>
+    private void CreateItemUI(Item item, Transform targetGrid)
+    {
+        GameObject newItem = Instantiate(itemPrefab, targetGrid);
+
+        // Configure les données de l'item
+        ItemData itemData = newItem.GetComponent<ItemData>();
+        if (itemData != null)
+        {
+            itemData.itemName = item.itemName;
+            itemData.itemIcon = item.itemIcon;
+            itemData.itemType = item.itemType;
+            itemData.quantity = item.quantity;
+            itemData.validSlot = DetermineValidSlot(item);
+        }
+
+        // Configure l'image et le texte
+        Image itemImage = newItem.GetComponent<Image>();
+        if (itemImage != null) itemImage.sprite = item.itemIcon;
+
+        TextMeshProUGUI itemText = newItem.GetComponentInChildren<TextMeshProUGUI>();
+        if (itemText != null) itemText.text = item.quantity > 1 ? item.quantity.ToString() : "";
+
+        // Configure dynamiquement l'événement OnClick pour le bouton
+        Button itemButton = newItem.GetComponent<Button>();
+        if (itemButton != null)
+        {
+            // Associe dynamiquement le GameObject à HandleItemClickWrapper
+            itemButton.onClick.AddListener(() => HandleItemClickWrapper(newItem));
+        }
+    }
+
+
+    /// <summary>
+    /// Méthode intermédiaire pour gérer le clic sur un objet sans paramètre complexe.
+    /// </summary>
+    public void HandleItemClickWrapper(GameObject clickedItem)
+    {
+        ItemData itemData = clickedItem.GetComponent<ItemData>();
+        if (itemData != null)
+        {
+            Item item = new Item(itemData.itemName, itemData.itemIcon, itemData.itemType, itemData.quantity);
+            HandleItemClick(item);
         }
         else
         {
-            slotImage.sprite = null;        // Efface l'icône
-            slotImage.color = new Color(1, 1, 1, 0); // Rendre l'image transparente
+            Debug.LogWarning("Aucun ItemData trouvé sur l'objet cliqué.");
         }
     }
 
-    void Update()
+    /// <summary>
+    /// Gère le clic sur un item dans l'inventaire.
+    /// </summary>
+    private void HandleItemClick(Item item)
     {
-        if (Input.GetKeyDown(KeyCode.U)) // Vérifie si la touche U est pressée
+        Debug.Log($"Item cliqué : {item.itemName}");
+
+        if (item.itemType == ItemType.Equipment)
         {
-            ToggleEquipment();
+            // Tente d'équiper l'item via le EquipmentManager
+            EquipmentManager.instance.Equip(item);
+            inventory.RemoveItem(item.itemName, 1); // Retire l'item de l'inventaire
+            Debug.Log($"{item.itemName} équipé via EquipmentManager.");
+        }
+        else
+        {
+            Debug.Log("Cet objet ne peut pas être équipé.");
         }
     }
 
-    public void ToggleEquipment()
+    /// <summary>
+    /// Détermine le slot valide pour un item d'équipement.
+    /// </summary>
+    private string DetermineValidSlot(Item item)
     {
-        // Change l'état actif du panel (ouvert/fermé)
-        bool isActive = equipmentPanel.activeSelf;
-        equipmentPanel.SetActive(!isActive);
+        Debug.Log($"Détermination du slot pour : {item.itemName}");
+        return item.itemName switch
+        {
+            "Casque de chevalier" => "Casque",
+            "Sword" => "Arme",
+            "Armure légère" => "Torse",
+            "Jambières renforcées" => "Jambiere",
+            "Bottes de cuir" => "Bottes",
+            _ => null // Aucun slot trouvé
+        };
+    }
 
-        // Gère l'état du curseur (utile si tu utilises un système de verrouillage du curseur)
+    /// <summary>
+    /// Supprime tous les objets enfants d'une grille donnée.
+    /// </summary>
+    private void ClearGrid(Transform grid)
+    {
+        foreach (Transform child in grid)
+        {
+            Destroy(child.gameObject);
+        }
+    }
+
+    private void Update()
+    {
+        // Vérifie si la touche I est pressée pour ouvrir/fermer l'inventaire
+        if (Input.GetKeyDown(KeyCode.I))
+        {
+            ToggleInventory();
+        }
+    }
+
+    /// <summary>
+    /// Ouvre ou ferme l'inventaire et gère l'état du curseur.
+    /// </summary>
+    public void ToggleInventory()
+    {
+        bool isActive = inventoryPanel.activeSelf;
+        inventoryPanel.SetActive(!isActive);
+
+        // Activer/désactiver le curseur en fonction de l'état de l'inventaire
         Cursor.lockState = isActive ? CursorLockMode.Locked : CursorLockMode.None;
         Cursor.visible = !isActive;
 
-        Debug.Log(isActive ? "Fermeture du panneau d'équipement." : "Ouverture du panneau d'équipement.");
+        Debug.Log(isActive ? "Fermeture de l'inventaire." : "Ouverture de l'inventaire.");
     }
 }
