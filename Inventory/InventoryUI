@@ -9,11 +9,11 @@ public class InventoryUI : MonoBehaviour
     public Transform equipmentGrid; // Grid pour les équipements
     public Transform resourcesGrid; // Grid pour les ressources
     public Transform questsGrid; // Grid pour les objets de quête
-    public GameObject itemPrefab; // Préfabriqué pour afficher un objet
+    public GameObject itemPrefab; // Préfabriqué pour afficher un objet dans l'inventaire
 
     void Start()
     {
-        // Assurez-vous que l'inventaire est désactivé au démarrage si nécessaire
+        // Désactiver le panel de l'inventaire au démarrage si nécessaire
         inventoryPanel.SetActive(false);
     }
 
@@ -47,23 +47,43 @@ public class InventoryUI : MonoBehaviour
 
             if (targetGrid != null)
             {
-                // Instancier le préfabriqué de l'item dans la grille appropriée
+                // Instancier le prefab de l'item dans la grille cible
                 GameObject newItem = Instantiate(itemPrefab, targetGrid);
-                Image itemImage = newItem.GetComponent<Image>();
-                TextMeshProUGUI itemText = newItem.GetComponentInChildren<TextMeshProUGUI>();
 
-                // Assigner l'icône et la quantité de l'item
-                if (itemImage != null) itemImage.sprite = item.itemIcon;
-                if (itemText != null) itemText.text = item.quantity.ToString();
-
-                // Ajouter un événement de clic pour équiper l'item si c'est un équipement
-                if (item.itemType == ItemType.Equipment)
+                // Configurer le script ItemData avec les données de l'item
+                ItemData itemData = newItem.GetComponent<ItemData>();
+                if (itemData != null)
                 {
-                    Button itemButton = newItem.GetComponent<Button>();
-                    if (itemButton != null)
+                    itemData.itemName = item.itemName;
+                    itemData.itemIcon = item.itemIcon;
+                    itemData.itemType = item.itemType;
+                    itemData.quantity = item.quantity;
+
+                    // Si c'est un équipement, définir le slot valide
+                    if (item.itemType == ItemType.Equipment)
                     {
-                        itemButton.onClick.AddListener(() => OnInventoryItemClick(item));
+                        itemData.validSlot = "Arme"; // Ou autre type selon la configuration
                     }
+                }
+
+                // Configurer l'affichage visuel (image et texte)
+                Image itemImage = newItem.GetComponent<Image>();
+                if (itemImage != null)
+                {
+                    itemImage.sprite = item.itemIcon;
+                }
+
+                TextMeshProUGUI itemText = newItem.GetComponentInChildren<TextMeshProUGUI>();
+                if (itemText != null)
+                {
+                    itemText.text = item.quantity.ToString();
+                }
+
+                // Ajouter un événement de clic pour interagir avec l'item
+                Button itemButton = newItem.GetComponent<Button>();
+                if (itemButton != null)
+                {
+                    itemButton.onClick.AddListener(() => OnInventoryItemClick(item));
                 }
             }
         }
@@ -84,17 +104,19 @@ public class InventoryUI : MonoBehaviour
             Debug.Log("Cet objet ne peut pas être équipé.");
         }
     }
+
     private void ClearGrid(Transform grid)
     {
+        // Supprimer tous les objets enfants de la grille
         foreach (Transform child in grid)
         {
-            Destroy(child.gameObject); // Supprime l'objet de la grille
+            Destroy(child.gameObject);
         }
     }
 
     void Update()
     {
-        if (Input.GetKeyDown(KeyCode.I)) // Vérifie si la touche I est pressée
+        if (Input.GetKeyDown(KeyCode.I)) // Ouvrir/fermer l'inventaire avec la touche I
         {
             ToggleInventory();
         }
@@ -105,7 +127,7 @@ public class InventoryUI : MonoBehaviour
         bool isActive = inventoryPanel.activeSelf;
         inventoryPanel.SetActive(!isActive);
 
-        // Active ou désactive le curseur en fonction de l'état de l'inventaire
+        // Activer/désactiver le curseur selon l'état de l'inventaire
         Cursor.lockState = isActive ? CursorLockMode.Locked : CursorLockMode.None;
         Cursor.visible = !isActive;
     }
