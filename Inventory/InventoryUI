@@ -4,6 +4,7 @@ using TMPro;
 
 public class InventoryUI : MonoBehaviour
 {
+    // Références principales
     public Inventory inventory; // Référence à l'inventaire
     public GameObject inventoryPanel; // Panel principal de l'inventaire
     public Transform equipmentGrid; // Grid pour les équipements
@@ -11,91 +12,121 @@ public class InventoryUI : MonoBehaviour
     public Transform questsGrid; // Grid pour les objets de quête
     public GameObject itemPrefab; // Préfabriqué pour afficher un objet dans l'inventaire
 
-    void Start()
+    private void Start()
     {
-        // Désactiver le panel de l'inventaire au démarrage si nécessaire
+        // Assurez-vous que l'inventaire est désactivé au démarrage
         inventoryPanel.SetActive(false);
     }
 
+    /// <summary>
+    /// Met à jour l'UI de l'inventaire pour refléter son contenu actuel.
+    /// </summary>
     public void UpdateUI()
     {
-        Debug.Log("Mise à jour de l'UI de l'inventaire");
+        Debug.Log("Mise à jour de l'UI de l'inventaire.");
 
         // Vider les grilles existantes
         ClearGrid(equipmentGrid);
         ClearGrid(resourcesGrid);
         ClearGrid(questsGrid);
 
-        // Parcourir les items de l'inventaire
+        // Parcourir les items de l'inventaire et les afficher
         foreach (Item item in inventory.items)
         {
-            Transform targetGrid = null;
-
-            // Déterminer la grille cible en fonction du type d'item
-            switch (item.itemType)
-            {
-                case ItemType.Equipment:
-                    targetGrid = equipmentGrid;
-                    break;
-                case ItemType.Resource:
-                    targetGrid = resourcesGrid;
-                    break;
-                case ItemType.QuestItem:
-                    targetGrid = questsGrid;
-                    break;
-            }
-
+            Transform targetGrid = DetermineTargetGrid(item.itemType);
             if (targetGrid != null)
             {
-                // Instancier le prefab de l'item dans la grille cible
-                GameObject newItem = Instantiate(itemPrefab, targetGrid);
-
-                // Configurer le script ItemData avec les données de l'item
-                ItemData itemData = newItem.GetComponent<ItemData>();
-                if (itemData != null)
-                {
-                    itemData.itemName = item.itemName;
-                    itemData.itemIcon = item.itemIcon;
-                    itemData.itemType = item.itemType;
-                    itemData.quantity = item.quantity;
-
-                    // Si c'est un équipement, définir le slot valide
-                    if (item.itemType == ItemType.Equipment)
-                    {
-                        itemData.validSlot = "Arme"; // Ou autre type selon la configuration
-                    }
-                }
-
-                // Configurer l'affichage visuel (image et texte)
-                Image itemImage = newItem.GetComponent<Image>();
-                if (itemImage != null)
-                {
-                    itemImage.sprite = item.itemIcon;
-                }
-
-                TextMeshProUGUI itemText = newItem.GetComponentInChildren<TextMeshProUGUI>();
-                if (itemText != null)
-                {
-                    itemText.text = item.quantity.ToString();
-                }
-
-                // Ajouter un événement de clic pour interagir avec l'item
-                Button itemButton = newItem.GetComponent<Button>();
-                if (itemButton != null)
-                {
-                    itemButton.onClick.AddListener(() => OnInventoryItemClick(item));
-                }
+                CreateItemUI(item, targetGrid);
             }
         }
     }
 
-    void OnInventoryItemClick(Item item)
+    /// <summary>
+    /// Détermine la grille cible en fonction du type d'item.
+    /// </summary>
+    private Transform DetermineTargetGrid(ItemType itemType)
+    {
+        switch (itemType)
+        {
+            case ItemType.Equipment: return equipmentGrid;
+            case ItemType.Resource: return resourcesGrid;
+            case ItemType.QuestItem: return questsGrid;
+            default: return null;
+        }
+    }
+
+    /// <summary>
+    /// Crée un élément visuel dans l'UI pour un item donné.
+    /// </summary>
+    private void CreateItemUI(Item item, Transform targetGrid)
+    {
+        GameObject newItem = Instantiate(itemPrefab, targetGrid);
+
+        ItemData itemData = newItem.GetComponent<ItemData>();
+        if (itemData != null)
+        {
+            itemData.itemName = item.itemName;
+            itemData.itemIcon = item.itemIcon;
+            itemData.itemType = item.itemType;
+            itemData.quantity = item.quantity;
+
+            // Définir le slot valide
+            itemData.validSlot = DetermineValidSlot(item);
+            Debug.Log($"Slot valide défini pour {item.itemName}: {itemData.validSlot}");
+        }
+        else
+        {
+            Debug.LogError("ItemData est manquant sur le prefab !");
+        }
+
+        Image itemImage = newItem.GetComponent<Image>();
+        if (itemImage != null)
+        {
+            itemImage.sprite = item.itemIcon;
+        }
+
+        TextMeshProUGUI itemText = newItem.GetComponentInChildren<TextMeshProUGUI>();
+        if (itemText != null)
+        {
+            itemText.text = item.quantity > 1 ? item.quantity.ToString() : "";
+        }
+
+        Button itemButton = newItem.GetComponent<Button>();
+        if (itemButton != null)
+        {
+            itemButton.onClick.AddListener(() => OnInventoryItemClick(item));
+        }
+    }
+
+    /// <summary>
+    /// Détermine le slot valide pour un item d'équipement.
+    /// </summary>
+    private string DetermineValidSlot(Item item)
+    {
+        Debug.Log($"Détermination du slot pour : {item.itemName}");
+        switch (item.itemName)
+        {
+            case "Casque de chevalier": return "Casque";
+            case "Sword": return "Arme";
+            case "Armure légère": return "Torse";
+            case "Jambières renforcées": return "Jambiere";
+            case "Bottes de cuir": return "Bottes";
+            default:
+                Debug.LogWarning($"Aucun slot valide trouvé pour {item.itemName}");
+                return null; // Aucun slot trouvé
+        }
+    }
+
+    /// <summary>
+    /// Action effectuée lorsqu'un item est cliqué dans l'inventaire.
+    /// </summary>
+    private void OnInventoryItemClick(Item item)
     {
         Debug.Log($"Item cliqué : {item.itemName}");
 
         if (item.itemType == ItemType.Equipment)
         {
-            // Appeler la méthode pour équiper l'item via EquipmentManager
+            // Tente d'équiper l'item via le EquipmentManager
             EquipmentManager.instance.Equip(item);
             Debug.Log($"{item.itemName} équipé via EquipmentManager.");
         }
@@ -105,30 +136,38 @@ public class InventoryUI : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Supprime tous les objets enfants d'une grille donnée.
+    /// </summary>
     private void ClearGrid(Transform grid)
     {
-        // Supprimer tous les objets enfants de la grille
         foreach (Transform child in grid)
         {
             Destroy(child.gameObject);
         }
     }
 
-    void Update()
+    private void Update()
     {
-        if (Input.GetKeyDown(KeyCode.I)) // Ouvrir/fermer l'inventaire avec la touche I
+        // Vérifie si la touche I est pressée pour ouvrir/fermer l'inventaire
+        if (Input.GetKeyDown(KeyCode.I))
         {
             ToggleInventory();
         }
     }
 
+    /// <summary>
+    /// Ouvre ou ferme l'inventaire et gère l'état du curseur.
+    /// </summary>
     public void ToggleInventory()
     {
         bool isActive = inventoryPanel.activeSelf;
         inventoryPanel.SetActive(!isActive);
 
-        // Activer/désactiver le curseur selon l'état de l'inventaire
+        // Activer/désactiver le curseur en fonction de l'état de l'inventaire
         Cursor.lockState = isActive ? CursorLockMode.Locked : CursorLockMode.None;
         Cursor.visible = !isActive;
+
+        Debug.Log(isActive ? "Fermeture de l'inventaire." : "Ouverture de l'inventaire.");
     }
 }
