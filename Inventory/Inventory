@@ -1,0 +1,47 @@
+using UnityEngine;
+using System.Collections.Generic;
+
+public class Inventory : MonoBehaviour
+{
+    public List<Item> items = new List<Item>(); // Liste des objets dans l'inventaire
+    public InventoryUI inventoryUI; // À assigner dans l’Inspector
+
+    public void AddItem(string itemName, Sprite itemIcon, int quantity = 1, ItemType itemType = ItemType.Resource)
+    {
+        // Vérifie si l'objet existe déjà dans l'inventaire
+        Item existingItem = items.Find(item => item.itemName == itemName);
+
+        if (existingItem != null)
+        {
+            existingItem.quantity += quantity; // Ajoute à la quantité existante
+        }
+        else
+        {
+            items.Add(new Item(itemName, itemIcon, itemType, quantity)); // Ajoute un nouvel objet
+        }
+
+        Debug.Log($"Ajouté : {itemName} x{quantity} - Total objets : {items.Count}");
+
+        if (inventoryUI != null)
+        {
+            inventoryUI.UpdateUI(); // Met à jour l'UI
+        }
+    }
+
+    public void RemoveItem(string itemName, int quantity = 1)
+    {
+        Item existingItem = items.Find(item => item.itemName == itemName);
+
+        if (existingItem != null)
+        {
+            existingItem.quantity -= quantity;
+
+            if (existingItem.quantity <= 0)
+            {
+                items.Remove(existingItem); // Supprime l'objet si la quantité est 0 ou moins
+            }
+
+            Debug.Log($"Retiré : {itemName} x{quantity}");
+        }
+    }
+}
