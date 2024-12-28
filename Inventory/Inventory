@@ -3,8 +3,23 @@ using System.Collections.Generic;
 
 public class Inventory : MonoBehaviour
 {
+    public static Inventory instance; // Singleton pour un accès global
+
     public List<Item> items = new List<Item>(); // Liste des objets dans l'inventaire
-    public InventoryUI inventoryUI; // À assigner dans l’Inspector
+    public InventoryUI inventoryUI; // Référence à l'UI d'inventaire
+
+    private void Awake()
+    {
+        // Configurer le singleton
+        if (instance != null && instance != this)
+        {
+            Destroy(gameObject);
+        }
+        else
+        {
+            instance = this;
+        }
+    }
 
     public void AddItem(string itemName, Sprite itemIcon, int quantity = 1, ItemType itemType = ItemType.Resource)
     {
@@ -13,19 +28,19 @@ public class Inventory : MonoBehaviour
 
         if (existingItem != null)
         {
-            existingItem.quantity += quantity; // Ajoute à la quantité existante
+            // Ajoute à la quantité existante
+            existingItem.quantity += quantity;
         }
         else
         {
-            items.Add(new Item(itemName, itemIcon, itemType, quantity)); // Ajoute un nouvel objet
+            // Ajoute un nouvel objet
+            items.Add(new Item(itemName, itemIcon, itemType, quantity));
         }
 
         Debug.Log($"Ajouté : {itemName} x{quantity} - Total objets : {items.Count}");
 
-        if (inventoryUI != null)
-        {
-            inventoryUI.UpdateUI(); // Met à jour l'UI
-        }
+        // Met à jour l'UI si elle est assignée
+        inventoryUI?.UpdateUI();
     }
 
     public void RemoveItem(string itemName, int quantity = 1)
@@ -38,10 +53,18 @@ public class Inventory : MonoBehaviour
 
             if (existingItem.quantity <= 0)
             {
-                items.Remove(existingItem); // Supprime l'objet si la quantité est 0 ou moins
+                // Supprime l'objet si la quantité atteint zéro
+                items.Remove(existingItem);
             }
 
             Debug.Log($"Retiré : {itemName} x{quantity}");
         }
+        else
+        {
+            Debug.LogWarning($"L'item {itemName} n'existe pas dans l'inventaire.");
+        }
+
+        // Met à jour l'UI après suppression
+        inventoryUI?.UpdateUI();
     }
 }
