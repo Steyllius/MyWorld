@@ -1,0 +1,29 @@
+using UnityEngine;
+using UnityEngine.EventSystems;
+
+public class EquipmentSlot : MonoBehaviour, IDropHandler
+{
+    public string slotType; // Le type de slot (par exemple, "Arme", "Casque")
+    public EquipmentUI equipmentUI; // Référence à l'UI d'équipement
+
+    public void OnDrop(PointerEventData eventData)
+    {
+        DragDropItem draggedItem = eventData.pointerDrag.GetComponent<DragDropItem>();
+
+        if (draggedItem != null)
+        {
+            // Vérifie que l'item est compatible avec le slot
+            ItemData itemData = draggedItem.GetComponent<ItemData>();
+            if (itemData != null && itemData.validSlot == slotType)
+            {
+                // Appelle l'équipement via l'EquipmentUI
+                equipmentUI.EquipItem(slotType, itemData.GetItem());
+                Debug.Log($"Équipé : {itemData.itemName} dans le slot {slotType}");
+            }
+            else
+            {
+                Debug.Log($"Impossible d'équiper {draggedItem.itemData.itemName} dans le slot {slotType}");
+            }
+        }
+    }
+}
