@@ -3,15 +3,16 @@ using UnityEngine;
 
 public class EquipmentManager : MonoBehaviour
 {
-    public static EquipmentManager instance; // Singleton pour un accès facile
+    public static EquipmentManager instance; // Singleton pour un accès global
 
     private CharacterEquipment characterEquipment;
 
-    public event Action<string, Item> OnEquipmentChanged; // Événement pour notifier les changements d'équipement
+    // Événement pour notifier les changements d'équipement
+    public event Action<string, Item> OnEquipmentChanged;
 
     private void Awake()
     {
-        // Singleton : s'assurer qu'il n'y a qu'une seule instance
+        // Configurer le singleton
         if (instance != null && instance != this)
         {
             Destroy(gameObject);
@@ -21,7 +22,8 @@ public class EquipmentManager : MonoBehaviour
             instance = this;
         }
 
-        characterEquipment = new CharacterEquipment(); // Initialisation de l'équipement du personnage
+        // Initialisation de l'équipement du personnage
+        characterEquipment = new CharacterEquipment();
         Debug.Log("EquipmentManager singleton initialisé.");
     }
 
@@ -32,21 +34,24 @@ public class EquipmentManager : MonoBehaviour
 
     public void Equip(Item item)
     {
-        // Détermine le slot correspondant à l'item
-        string slotType = GetSlotTypeForItem(item);
+        string slotType = GetSlotTypeForItem(item); // Détermine le slot cible
 
         if (slotType != null)
         {
+            // Équipe l'item dans le slot approprié
             characterEquipment.EquipItem(slotType, item);
 
             // Notifie les changements d'équipement
             OnEquipmentChanged?.Invoke(slotType, item);
 
+            // Supprime l'item de l'inventaire après l'avoir équipé
+            Inventory.instance.RemoveItem(item.itemName);
+
             Debug.Log($"{item.itemName} équipé dans le slot {slotType}.");
         }
         else
         {
-            Debug.LogWarning($"Impossible d'équiper {item.itemName} : aucun slot correspondant.");
+            Debug.LogWarning($"Impossible d'équiper {item.itemName} : aucun slot correspondant trouvé.");
         }
     }
 
@@ -56,12 +61,21 @@ public class EquipmentManager : MonoBehaviour
 
         if (removedItem != null)
         {
+            // Retire l'item de l'équipement
             characterEquipment.UnequipItem(slotType);
 
             // Notifie les changements d'équipement
             OnEquipmentChanged?.Invoke(slotType, null);
 
-            Debug.Log($"{slotType} déséquipé : {removedItem.itemName}.");
+            // Ajoute l'item retiré à l'inventaire
+            Inventory.instance.AddItem(
+                removedItem.itemName,
+                removedItem.itemIcon,
+                removedItem.quantity,
+                removedItem.itemType
+            );
+
+            Debug.Log($"{removedItem.itemName} retiré du slot {slotType} et ajouté à l'inventaire.");
         }
         else
         {
@@ -71,7 +85,7 @@ public class EquipmentManager : MonoBehaviour
 
     private string GetSlotTypeForItem(Item item)
     {
-        // Exemple simple pour déterminer le slot cible
+        // Détermine le type de slot correspondant à l'item
         switch (item.itemName)
         {
             case "Casque de chevalier":
