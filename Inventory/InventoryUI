@@ -46,22 +46,29 @@ public class InventoryUI : MonoBehaviour
     /// </summary>
     private Transform DetermineTargetGrid(ItemType itemType)
     {
-        switch (itemType)
+        return itemType switch
         {
-            case ItemType.Equipment: return equipmentGrid;
-            case ItemType.Resource: return resourcesGrid;
-            case ItemType.QuestItem: return questsGrid;
-            default: return null;
-        }
+            ItemType.Equipment => equipmentGrid,
+            ItemType.Resource => resourcesGrid,
+            ItemType.QuestItem => questsGrid,
+            _ => null
+        };
     }
 
     /// <summary>
     /// Crée un élément visuel dans l'UI pour un item donné.
     /// </summary>
+    /// <summary>
+    /// Crée un élément visuel dans l'UI pour un item donné.
+    /// </summary>
+    /// <param name="item">L'item à afficher.</param>
+    /// <param name="targetGrid">La grille cible où l'item sera placé.</param>
     private void CreateItemUI(Item item, Transform targetGrid)
     {
+        // Instancie le prefab
         GameObject newItem = Instantiate(itemPrefab, targetGrid);
 
+        // Configure les données de l'item
         ItemData itemData = newItem.GetComponent<ItemData>();
         if (itemData != null)
         {
@@ -69,16 +76,14 @@ public class InventoryUI : MonoBehaviour
             itemData.itemIcon = item.itemIcon;
             itemData.itemType = item.itemType;
             itemData.quantity = item.quantity;
-
-            // Définir le slot valide
             itemData.validSlot = DetermineValidSlot(item);
-            Debug.Log($"Slot valide défini pour {item.itemName}: {itemData.validSlot}");
         }
         else
         {
-            Debug.LogError("ItemData est manquant sur le prefab !");
+            Debug.LogError("ItemData manquant sur le prefab !");
         }
 
+        // Configure l'image et le texte
         Image itemImage = newItem.GetComponent<Image>();
         if (itemImage != null)
         {
@@ -91,10 +96,23 @@ public class InventoryUI : MonoBehaviour
             itemText.text = item.quantity > 1 ? item.quantity.ToString() : "";
         }
 
+        // Configure dynamiquement le bouton
         Button itemButton = newItem.GetComponent<Button>();
         if (itemButton != null)
         {
-            itemButton.onClick.AddListener(() => OnInventoryItemClick(item));
+            itemButton.onClick.RemoveAllListeners(); // Supprime les anciens listeners
+
+            // Associe une méthode sans passer de paramètre explicite
+            itemButton.onClick.AddListener(() =>
+            {
+                HandleItemClick(item); // Appelle HandleItemClick avec l'objet actuel
+            });
+
+            Debug.Log($"Bouton configuré pour l'item : {item.itemName}");
+        }
+        else
+        {
+            Debug.LogWarning("Aucun composant Button trouvé sur le prefab !");
         }
     }
 
@@ -104,31 +122,49 @@ public class InventoryUI : MonoBehaviour
     private string DetermineValidSlot(Item item)
     {
         Debug.Log($"Détermination du slot pour : {item.itemName}");
-        switch (item.itemName)
+        return item.itemName switch
         {
-            case "Casque de chevalier": return "Casque";
-            case "Sword": return "Arme";
-            case "Armure légère": return "Torse";
-            case "Jambières renforcées": return "Jambiere";
-            case "Bottes de cuir": return "Bottes";
-            default:
-                Debug.LogWarning($"Aucun slot valide trouvé pour {item.itemName}");
-                return null; // Aucun slot trouvé
+            "Casque de chevalier" => "Casque",
+            "Sword" => "Arme",
+            "Armure légère" => "Torse",
+            "Jambières renforcées" => "Jambiere",
+            "Bottes de cuir" => "Bottes",
+            _ => null // Aucun slot trouvé
+        };
+    }
+
+    /// <summary>
+    /// Wrapper pour gérer le clic sur un GameObject représentant un item.
+    /// </summary>
+    public void HandleItemClickWrapper(GameObject itemObject)
+    {
+        Debug.Log($"GameObject cliqué : {itemObject.name}");
+
+        // Récupère les données de l'item via le script ItemData
+        ItemData itemData = itemObject.GetComponent<ItemData>();
+        if (itemData != null)
+        {
+            HandleItemClick(itemData.GetItem());
+        }
+        else
+        {
+            Debug.LogWarning("Aucune donnée d'item trouvée sur l'objet cliqué !");
         }
     }
 
     /// <summary>
-    /// Action effectuée lorsqu'un item est cliqué dans l'inventaire.
+    /// Gère le clic sur un item dans l'inventaire.
     /// </summary>
-    private void OnInventoryItemClick(Item item)
+    public void HandleItemClick(Item item)
     {
         Debug.Log($"Item cliqué : {item.itemName}");
 
         if (item.itemType == ItemType.Equipment)
         {
-            // Tente d'équiper l'item via le EquipmentManager
+            // Équipe l'item via le EquipmentManager
             EquipmentManager.instance.Equip(item);
-            Debug.Log($"{item.itemName} équipé via EquipmentManager.");
+            inventory.RemoveItem(item.itemName, 1); // Retire l'item de l'inventaire
+            Debug.Log($"{item.itemName} équipé !");
         }
         else
         {
