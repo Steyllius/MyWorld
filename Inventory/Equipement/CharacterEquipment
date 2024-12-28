@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 
 public class CharacterEquipment
@@ -11,20 +12,44 @@ public class CharacterEquipment
         { "Bottes", null }
     };
 
+    // Événement déclenché lors d'un changement d'équipement
+    public event Action<string, Item> OnEquipmentChanged;
+
     public void EquipItem(string slotType, Item item)
     {
-        if (equippedItems.ContainsKey(slotType))
+        if (!equippedItems.ContainsKey(slotType))
         {
-            equippedItems[slotType] = item;
+            throw new ArgumentException($"Slot {slotType} n'existe pas !");
         }
+
+        // Vérifie si l'item correspond au slot
+        if (!IsItemValidForSlot(slotType, item))
+        {
+            throw new InvalidOperationException($"{item.itemName} ne peut pas être équipé dans le slot {slotType}.");
+        }
+
+        equippedItems[slotType] = item;
+
+        // Notifie le changement d'équipement
+        OnEquipmentChanged?.Invoke(slotType, item);
+
+        Console.WriteLine($"{item.itemName} équipé dans le slot {slotType}.");
     }
 
     public void UnequipItem(string slotType)
     {
-        if (equippedItems.ContainsKey(slotType))
+        if (!equippedItems.ContainsKey(slotType))
         {
-            equippedItems[slotType] = null;
+            throw new ArgumentException($"Slot {slotType} n'existe pas !");
         }
+
+        Item previousItem = equippedItems[slotType];
+        equippedItems[slotType] = null;
+
+        // Notifie le changement d'équipement
+        OnEquipmentChanged?.Invoke(slotType, null);
+
+        Console.WriteLine($"Slot {slotType} déséquipé.");
     }
 
     public Item GetEquippedItem(string slotType)
@@ -34,5 +59,24 @@ public class CharacterEquipment
             return equippedItems[slotType];
         }
         return null;
+    }
+
+    public Dictionary<string, Item> GetAllEquippedItems()
+    {
+        return new Dictionary<string, Item>(equippedItems);
+    }
+
+    private bool IsItemValidForSlot(string slotType, Item item)
+    {
+        // Exemple simple de validation
+        switch (slotType)
+        {
+            case "Casque":
+                return item.itemType == ItemType.Equipment; // Spécifie le type d'équipement attendu
+            case "Arme":
+                return item.itemType == ItemType.Equipment; // Peut être affiné selon le type d'arme
+            default:
+                return true;
+        }
     }
 }
