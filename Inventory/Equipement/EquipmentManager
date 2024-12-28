@@ -1,0 +1,91 @@
+using System;
+using UnityEngine;
+
+public class EquipmentManager : MonoBehaviour
+{
+    public static EquipmentManager instance; // Singleton pour un accès facile
+
+    private CharacterEquipment characterEquipment;
+
+    public event Action<string, Item> OnEquipmentChanged; // Événement pour notifier les changements d'équipement
+
+    private void Awake()
+    {
+        // Singleton : s'assurer qu'il n'y a qu'une seule instance
+        if (instance != null && instance != this)
+        {
+            Destroy(gameObject);
+        }
+        else
+        {
+            instance = this;
+        }
+
+        characterEquipment = new CharacterEquipment(); // Initialisation de l'équipement du personnage
+        Debug.Log("EquipmentManager singleton initialisé.");
+    }
+
+    public CharacterEquipment GetCharacterEquipment()
+    {
+        return characterEquipment;
+    }
+
+    public void Equip(Item item)
+    {
+        // Détermine le slot correspondant à l'item
+        string slotType = GetSlotTypeForItem(item);
+
+        if (slotType != null)
+        {
+            characterEquipment.EquipItem(slotType, item);
+
+            // Notifie les changements d'équipement
+            OnEquipmentChanged?.Invoke(slotType, item);
+
+            Debug.Log($"{item.itemName} équipé dans le slot {slotType}.");
+        }
+        else
+        {
+            Debug.LogWarning($"Impossible d'équiper {item.itemName} : aucun slot correspondant.");
+        }
+    }
+
+    public void Unequip(string slotType)
+    {
+        Item removedItem = characterEquipment.GetEquippedItem(slotType);
+
+        if (removedItem != null)
+        {
+            characterEquipment.UnequipItem(slotType);
+
+            // Notifie les changements d'équipement
+            OnEquipmentChanged?.Invoke(slotType, null);
+
+            Debug.Log($"{slotType} déséquipé : {removedItem.itemName}.");
+        }
+        else
+        {
+            Debug.LogWarning($"Aucun item à déséquiper dans le slot {slotType}.");
+        }
+    }
+
+    private string GetSlotTypeForItem(Item item)
+    {
+        // Exemple simple pour déterminer le slot cible
+        switch (item.itemName)
+        {
+            case "Casque de chevalier":
+                return "Casque";
+            case "Armure légère":
+                return "Torse";
+            case "Jambières renforcées":
+                return "Jambiere";
+            case "Épée longue":
+                return "Arme";
+            case "Bottes de cuir":
+                return "Bottes";
+            default:
+                return null; // Aucun slot trouvé
+        }
+    }
+}
