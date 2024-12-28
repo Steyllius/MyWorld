@@ -34,24 +34,24 @@ public class EquipmentManager : MonoBehaviour
 
     public void Equip(Item item)
     {
-        string slotType = GetSlotTypeForItem(item); // Détermine le slot cible
+        string slotType = GetSlotTypeForItem(item);
 
         if (slotType != null)
         {
-            // Équipe l'item dans le slot approprié
             characterEquipment.EquipItem(slotType, item);
-
-            // Notifie les changements d'équipement
             OnEquipmentChanged?.Invoke(slotType, item);
 
-            // Supprime l'item de l'inventaire après l'avoir équipé
+            // Supprime l'item de l'inventaire
             Inventory.instance.RemoveItem(item.itemName);
+
+            // Met à jour l'UI de l'inventaire
+            Inventory.instance.inventoryUI.UpdateUI();
 
             Debug.Log($"{item.itemName} équipé dans le slot {slotType}.");
         }
         else
         {
-            Debug.LogWarning($"Impossible d'équiper {item.itemName} : aucun slot correspondant trouvé.");
+            Debug.LogWarning($"Impossible d'équiper {item.itemName} : aucun slot correspondant.");
         }
     }
 
@@ -61,19 +61,19 @@ public class EquipmentManager : MonoBehaviour
 
         if (removedItem != null)
         {
-            // Retire l'item de l'équipement
             characterEquipment.UnequipItem(slotType);
-
-            // Notifie les changements d'équipement
             OnEquipmentChanged?.Invoke(slotType, null);
 
-            // Ajoute l'item retiré à l'inventaire
+            // Ajoute l'item à l'inventaire
             Inventory.instance.AddItem(
                 removedItem.itemName,
                 removedItem.itemIcon,
                 removedItem.quantity,
                 removedItem.itemType
             );
+
+            // Met à jour l'UI de l'inventaire
+            Inventory.instance.inventoryUI.UpdateUI();
 
             Debug.Log($"{removedItem.itemName} retiré du slot {slotType} et ajouté à l'inventaire.");
         }
