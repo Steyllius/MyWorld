@@ -1,0 +1,80 @@
+using UnityEngine;
+using UnityEngine.UI;
+
+public class EquipmentUI : MonoBehaviour
+{
+    // Slots pour chaque pièce d'équipement
+    public Image helmetSlot;
+    public Image chestplateSlot;
+    public Image leggingsSlot;
+    public Image weaponSlot;
+    public Image bootsSlot;
+    public GameObject equipmentPanel;
+    private CharacterEquipment characterEquipment;
+
+    void Start()
+    {
+        characterEquipment = new CharacterEquipment(); // Initialise les équipements
+        UpdateEquipmentUI(); // Met à jour l'UI au démarrage
+    }
+
+    public void EquipItem(string slotType, Item item)
+    {
+        characterEquipment.EquipItem(slotType, item);
+        UpdateEquipmentUI();
+    }
+
+    public void UnequipItem(string slotType)
+    {
+        characterEquipment.UnequipItem(slotType);
+        UpdateEquipmentUI();
+        Debug.Log($"{slotType} déséquipé !");
+    }
+
+    private void UpdateEquipmentUI()
+    {
+        // Met à jour chaque slot
+        UpdateSlotUI(helmetSlot, "Casque");
+        UpdateSlotUI(chestplateSlot, "Torse");
+        UpdateSlotUI(leggingsSlot, "Jambiere");
+        UpdateSlotUI(weaponSlot, "Arme");
+        UpdateSlotUI(bootsSlot, "Bottes");
+    }
+
+    private void UpdateSlotUI(Image slotImage, string slotType)
+    {
+        Item equippedItem = characterEquipment.GetEquippedItem(slotType);
+
+        if (equippedItem != null)
+        {
+            slotImage.sprite = equippedItem.itemIcon; // Affiche l'icône de l'objet équipé
+            slotImage.color = Color.white; // Rend le slot visible
+        }
+        else
+        {
+            slotImage.sprite = null; // Efface l'icône
+            slotImage.color = new Color(1, 1, 1, 0); // Rend le slot transparent
+        }
+    }
+
+    void Update()
+    {
+        if (Input.GetKeyDown(KeyCode.U)) // Vérifie si la touche E est pressée
+        {
+            ToggleEquipment();
+        }
+    }
+
+    public void ToggleEquipment()
+    {
+        // Change l'état actif du panel (ouvert/fermé)
+        bool isActive = equipmentPanel.activeSelf;
+        equipmentPanel.SetActive(!isActive);
+
+        // Gère l'état du curseur (utile si tu utilises un système de verrouillage du curseur)
+        Cursor.lockState = isActive ? CursorLockMode.Locked : CursorLockMode.None;
+        Cursor.visible = !isActive;
+
+        Debug.Log(isActive ? "Fermeture du panneau d'équipement." : "Ouverture du panneau d'équipement.");
+    }
+}
