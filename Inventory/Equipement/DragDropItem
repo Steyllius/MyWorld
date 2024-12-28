@@ -1,0 +1,47 @@
+using UnityEngine;
+using UnityEngine.EventSystems;
+
+public class DragDropItem : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHandler
+{
+    private Canvas canvas; // Le canvas contenant l'UI
+    private RectTransform rectTransform; // Référence au RectTransform
+    private CanvasGroup canvasGroup; // Permet de gérer la visibilité
+    private Vector2 initialPosition; // Position initiale de l'item
+
+    public Item itemData; // Les données de l'item associé
+
+    private void Awake()
+    {
+        rectTransform = GetComponent<RectTransform>();
+        canvasGroup = GetComponent<CanvasGroup>();
+        canvas = GetComponentInParent<Canvas>(); // Trouve le canvas parent
+    }
+
+    private void Start()
+    {
+        initialPosition = rectTransform.anchoredPosition; // Stocke la position initiale
+    }
+
+    public void OnBeginDrag(PointerEventData eventData)
+    {
+        canvasGroup.blocksRaycasts = false; // Permet à d'autres éléments de détecter les raycasts
+    }
+
+    public void OnDrag(PointerEventData eventData)
+    {
+        // Déplace l'item avec la souris
+        rectTransform.anchoredPosition += eventData.delta / canvas.scaleFactor;
+    }
+
+    public void OnEndDrag(PointerEventData eventData)
+    {
+        canvasGroup.blocksRaycasts = true; // Réactive les raycasts
+
+        // Vérifie si l'item a été déposé sur un slot valide
+        if (!eventData.pointerDrag)
+        {
+            // Si le drop n'est pas valide, retourne à la position initiale
+            rectTransform.anchoredPosition = initialPosition;
+        }
+    }
+}
