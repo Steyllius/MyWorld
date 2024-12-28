@@ -10,56 +10,81 @@ public class EquipmentUI : MonoBehaviour
     public Image weaponSlot;
     public Image bootsSlot;
     public GameObject equipmentPanel;
+
     private CharacterEquipment characterEquipment;
 
     void Start()
     {
-        characterEquipment = new CharacterEquipment(); // Initialise les équipements
-        UpdateEquipmentUI(); // Met à jour l'UI au démarrage
+        characterEquipment = EquipmentManager.instance.GetCharacterEquipment(); // Obtenez l'instance actuelle
+        EquipmentManager.instance.OnEquipmentChanged += UpdateEquipmentUI; // Abonnez-vous aux changements
+        UpdateAllEquipmentUI(); // Met à jour tous les slots au démarrage
     }
 
     public void EquipItem(string slotType, Item item)
     {
         characterEquipment.EquipItem(slotType, item);
-        UpdateEquipmentUI();
+        UpdateEquipmentUI(slotType, item);
     }
 
     public void UnequipItem(string slotType)
     {
         characterEquipment.UnequipItem(slotType);
-        UpdateEquipmentUI();
+        UpdateEquipmentUI(slotType, null);
         Debug.Log($"{slotType} déséquipé !");
     }
 
-    private void UpdateEquipmentUI()
+    private void UpdateAllEquipmentUI()
     {
-        // Met à jour chaque slot
-        UpdateSlotUI(helmetSlot, "Casque");
-        UpdateSlotUI(chestplateSlot, "Torse");
-        UpdateSlotUI(leggingsSlot, "Jambiere");
-        UpdateSlotUI(weaponSlot, "Arme");
-        UpdateSlotUI(bootsSlot, "Bottes");
+        UpdateSlotUI(helmetSlot, characterEquipment.GetEquippedItem("Casque"));
+        UpdateSlotUI(chestplateSlot, characterEquipment.GetEquippedItem("Torse"));
+        UpdateSlotUI(leggingsSlot, characterEquipment.GetEquippedItem("Jambiere"));
+        UpdateSlotUI(weaponSlot, characterEquipment.GetEquippedItem("Arme"));
+        UpdateSlotUI(bootsSlot, characterEquipment.GetEquippedItem("Bottes"));
     }
 
-    private void UpdateSlotUI(Image slotImage, string slotType)
+    private void UpdateEquipmentUI(string slotType, Item item)
     {
-        Item equippedItem = characterEquipment.GetEquippedItem(slotType);
-
-        if (equippedItem != null)
+        // Met à jour uniquement le slot correspondant
+        switch (slotType)
         {
-            slotImage.sprite = equippedItem.itemIcon; // Affiche l'icône de l'objet équipé
-            slotImage.color = Color.white; // Rend le slot visible
+            case "Casque":
+                UpdateSlotUI(helmetSlot, item);
+                break;
+            case "Torse":
+                UpdateSlotUI(chestplateSlot, item);
+                break;
+            case "Jambiere":
+                UpdateSlotUI(leggingsSlot, item);
+                break;
+            case "Arme":
+                UpdateSlotUI(weaponSlot, item);
+                break;
+            case "Bottes":
+                UpdateSlotUI(bootsSlot, item);
+                break;
+            default:
+                Debug.LogWarning($"Slot inconnu : {slotType}");
+                break;
+        }
+    }
+
+    private void UpdateSlotUI(Image slotImage, Item item)
+    {
+        if (item != null)
+        {
+            slotImage.sprite = item.itemIcon; // Affiche l'icône de l'objet
+            slotImage.color = Color.white;   // Rendre l'image visible
         }
         else
         {
-            slotImage.sprite = null; // Efface l'icône
-            slotImage.color = new Color(1, 1, 1, 0); // Rend le slot transparent
+            slotImage.sprite = null;        // Efface l'icône
+            slotImage.color = new Color(1, 1, 1, 0); // Rendre l'image transparente
         }
     }
 
     void Update()
     {
-        if (Input.GetKeyDown(KeyCode.U)) // Vérifie si la touche E est pressée
+        if (Input.GetKeyDown(KeyCode.U)) // Vérifie si la touche U est pressée
         {
             ToggleEquipment();
         }
