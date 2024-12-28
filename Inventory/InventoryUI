@@ -1,0 +1,84 @@
+using UnityEngine;
+using UnityEngine.UI;
+using TMPro;
+
+public class InventoryUI : MonoBehaviour
+{
+    public Inventory inventory; // Référence à l'inventaire
+    public GameObject inventoryPanel; // Panel principal de l'inventaire
+    public Transform equipmentGrid; // Grid pour les équipements
+    public Transform resourcesGrid; // Grid pour les ressources
+    public Transform questsGrid; // Grid pour les objets de quête
+    public GameObject itemPrefab; // Préfabriqué pour afficher un objet
+
+    void Start()
+    {
+        // Assurez-vous que l'inventaire est désactivé au démarrage si nécessaire
+        inventoryPanel.SetActive(false);
+    }
+
+    public void UpdateUI()
+    {
+        Debug.Log("Mise à jour de l'UI de l'inventaire");
+
+        // Vide les Grids correspondants
+        ClearGrid(equipmentGrid);
+        ClearGrid(resourcesGrid);
+        ClearGrid(questsGrid);
+
+        // Ajoute chaque objet de l'inventaire à la grille correspondante
+        foreach (Item item in inventory.items)
+        {
+            Transform targetGrid = null;
+
+            switch (item.itemType)
+            {
+                case ItemType.Equipment:
+                    targetGrid = equipmentGrid;
+                    break;
+                case ItemType.Resource:
+                    targetGrid = resourcesGrid;
+                    break;
+                case ItemType.QuestItem:
+                    targetGrid = questsGrid;
+                    break;
+            }
+
+            if (targetGrid != null)
+            {
+                GameObject newItem = Instantiate(itemPrefab, targetGrid);
+                Image itemImage = newItem.GetComponent<Image>();
+                TextMeshProUGUI itemText = newItem.GetComponentInChildren<TextMeshProUGUI>();
+
+                if (itemImage != null) itemImage.sprite = item.itemIcon;
+                if (itemText != null) itemText.text = item.quantity.ToString();
+            }
+        }
+    }
+
+    private void ClearGrid(Transform grid)
+    {
+        foreach (Transform child in grid)
+        {
+            Destroy(child.gameObject); // Supprime l'objet de la grille
+        }
+    }
+
+    void Update()
+    {
+        if (Input.GetKeyDown(KeyCode.I)) // Vérifie si la touche I est pressée
+        {
+            ToggleInventory();
+        }
+    }
+
+    public void ToggleInventory()
+    {
+        bool isActive = inventoryPanel.activeSelf;
+        inventoryPanel.SetActive(!isActive);
+
+        // Active ou désactive le curseur en fonction de l'état de l'inventaire
+        Cursor.lockState = isActive ? CursorLockMode.Locked : CursorLockMode.None;
+        Cursor.visible = !isActive;
+    }
+}
