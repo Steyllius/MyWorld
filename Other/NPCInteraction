@@ -1,0 +1,86 @@
+using UnityEngine;
+
+public class NPCInteraction : MonoBehaviour
+{
+    public string npcName = "Nom du PNJ"; // Nom du PNJ
+    public string questDialogue = "Peux-tu récupérer 2 minerais pour moi ?";
+    public string rewardDialogue = "Merci pour les minerais ! Voici votre récompense !";
+    public string incompleteDialogue = "Il te manque encore des minerais !";
+    public QuestManager questManager; // Référence au QuestManager
+    public int rewardMoney = 200; // Récompense en argent
+
+    private bool isPlayerNearby = false;
+    private bool hasStartedQuest = false; // Vérifie si la quête a déjà commencé
+    private bool isQuestComplete = false; // Vérifie si la quête est terminée
+    private bool hasReceivedReward = false; // Empêche le spam de récompenses
+    private DialogueManager dialogueManager; // Référence au DialogueManager
+    private PlayerInventory playerInventory; // Référence au système d'inventaire
+
+    void Start()
+    {
+        dialogueManager = FindObjectOfType<DialogueManager>();
+        playerInventory = FindObjectOfType<PlayerInventory>();
+    }
+
+    void Update()
+    {
+        if (isPlayerNearby && Input.GetKeyDown(KeyCode.E))
+        {
+            if (!hasStartedQuest)
+            {
+                StartQuest();
+            }
+            else if (!isQuestComplete && questManager.IsQuestComplete)
+            {
+                CompleteQuest();
+            }
+            else if (isQuestComplete && !hasReceivedReward)
+            {
+                RewardPlayer();
+            }
+            else
+            {
+                dialogueManager.ShowDialogue($"[{npcName}]: Merci encore pour ton aide !");
+            }
+        }
+    }
+
+    private void StartQuest()
+    {
+        hasStartedQuest = true;
+        dialogueManager.ShowDialogue($"[{npcName}]: {questDialogue}");
+        questManager.StartQuest(); // Active le suivi de quête
+    }
+
+    private void CompleteQuest()
+    {
+        isQuestComplete = true;
+        dialogueManager.ShowDialogue($"[{npcName}]: Merci pour les minerais !");
+    }
+
+    private void RewardPlayer()
+    {
+        playerInventory.AddMoney(rewardMoney);
+        hasReceivedReward = true; // Empêche de redonner la récompense
+        dialogueManager.ShowDialogue($"[{npcName}]: Voici votre récompense de {rewardMoney} pièces !");
+        questManager.CompleteQuest(); // Désactive le suivi de quête
+    }
+
+    private void OnTriggerEnter(Collider other)
+    {
+        if (other.CompareTag("Player"))
+        {
+            isPlayerNearby = true;
+            dialogueManager.ShowDialogue($"Appuyez sur 'E' pour parler à {npcName}.");
+        }
+    }
+
+    private void OnTriggerExit(Collider other)
+    {
+        if (other.CompareTag("Player"))
+        {
+            isPlayerNearby = false;
+            dialogueManager.HideDialogue();
+        }
+    }
+}
