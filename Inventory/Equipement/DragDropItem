@@ -24,6 +24,7 @@ public class DragDropItem : MonoBehaviour, IBeginDragHandler, IDragHandler, IEnd
 
     public void OnBeginDrag(PointerEventData eventData)
     {
+        initialPosition = rectTransform.anchoredPosition; // Mémorise la position au début du drag
         canvasGroup.blocksRaycasts = false; // Permet à d'autres éléments de détecter les raycasts
     }
 
@@ -37,11 +38,14 @@ public class DragDropItem : MonoBehaviour, IBeginDragHandler, IDragHandler, IEnd
     {
         canvasGroup.blocksRaycasts = true; // Réactive les raycasts
 
-        // Vérifie si l'item a été déposé sur un slot valide
-        if (!eventData.pointerDrag)
+        // Si l'item n'est pas déposé sur un slot valide, retourne à sa position initiale
+        if (!eventData.pointerEnter || !eventData.pointerEnter.GetComponent<EquipmentSlot>())
         {
-            // Si le drop n'est pas valide, retourne à la position initiale
-            rectTransform.anchoredPosition = initialPosition;
+            rectTransform.anchoredPosition = initialPosition; // Retourne à la position initiale
+        }
+        else
+        {
+            Debug.Log("Item déposé sur un slot valide.");
         }
     }
 }
