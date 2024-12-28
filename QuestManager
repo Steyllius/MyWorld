@@ -1,0 +1,38 @@
+using UnityEngine;
+using TMPro;
+
+public class QuestManager : MonoBehaviour
+{
+    public TextMeshProUGUI questProgressText; // Texte pour afficher la progression
+    public int requiredMinerals = 2; // Nombre de minerais requis
+    private int collectedMinerals = 0; // Nombre de minerais collectés
+
+    public bool IsQuestComplete => collectedMinerals >= requiredMinerals; // Vérifie si la quête est terminée
+
+    void Start()
+    {
+        questProgressText.gameObject.SetActive(false); // Désactive le texte au début
+    }
+
+    public void StartQuest()
+    {
+        questProgressText.gameObject.SetActive(true); // Active le texte au démarrage de la quête
+        UpdateQuestProgress();
+    }
+
+    public void AddMineral()
+    {
+        collectedMinerals++;
+        UpdateQuestProgress();
+    }
+
+    public void CompleteQuest()
+    {
+        questProgressText.gameObject.SetActive(false); // Désactive le texte après la validation
+    }
+
+    private void UpdateQuestProgress()
+    {
+        questProgressText.text = $"Minerais collectés : {collectedMinerals}/{requiredMinerals}";
+    }
+}
