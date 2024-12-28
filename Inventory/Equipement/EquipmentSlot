@@ -8,22 +8,42 @@ public class EquipmentSlot : MonoBehaviour, IDropHandler
 
     public void OnDrop(PointerEventData eventData)
     {
-        DragDropItem draggedItem = eventData.pointerDrag.GetComponent<DragDropItem>();
-
-        if (draggedItem != null)
+        if (eventData.pointerDrag == null)
         {
-            // Vérifie que l'item est compatible avec le slot
-            ItemData itemData = draggedItem.GetComponent<ItemData>();
-            if (itemData != null && itemData.validSlot == slotType)
+            Debug.LogWarning("Aucun objet n'a été glissé !");
+            return;
+        }
+
+        DragDropItem draggedItem = eventData.pointerDrag.GetComponent<DragDropItem>();
+        if (draggedItem == null)
+        {
+            Debug.LogWarning("L'objet glissé n'a pas de composant DragDropItem !");
+            return;
+        }
+
+        ItemData itemData = draggedItem.GetComponent<ItemData>();
+        if (itemData == null)
+        {
+            Debug.LogWarning("L'objet glissé n'a pas de composant ItemData !");
+            return;
+        }
+
+        if (itemData.validSlot == slotType)
+        {
+            // Appelle l'équipement via l'EquipmentUI
+            if (equipmentUI != null)
             {
-                // Appelle l'équipement via l'EquipmentUI
                 equipmentUI.EquipItem(slotType, itemData.GetItem());
                 Debug.Log($"Équipé : {itemData.itemName} dans le slot {slotType}");
             }
             else
             {
-                Debug.Log($"Impossible d'équiper {draggedItem.itemData.itemName} dans le slot {slotType}");
+                Debug.LogError("equipmentUI n'est pas assigné dans l'Inspector !");
             }
+        }
+        else
+        {
+            Debug.LogWarning($"Impossible d'équiper {itemData.itemName} dans le slot {slotType}");
         }
     }
 }
