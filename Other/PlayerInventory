@@ -1,0 +1,24 @@
+using UnityEngine;
+using TMPro; // Nécessaire pour TextMeshPro
+
+public class PlayerInventory : MonoBehaviour
+{
+    public int money = 0; // Argent du joueur
+    public TextMeshProUGUI moneyText; // Référence au texte de l'argent
+
+    void Start()
+    {
+        UpdateMoneyUI(); // Met à jour l'UI au démarrage
+    }
+
+    public void AddMoney(int amount)
+    {
+        money += amount;
+        UpdateMoneyUI(); // Met à jour l'UI après modification
+    }
+
+    private void UpdateMoneyUI()
+    {
+        moneyText.text = $"Argent : {money}"; // Met à jour le texte de l'argent
+    }
+}
