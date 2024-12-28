@@ -1,0 +1,21 @@
+using UnityEngine;
+using TMPro; // Nécessaire si tu utilises TextMeshPro
+
+public class DialogueManager : MonoBehaviour
+{
+    public TextMeshProUGUI dialogueText; // Référence au texte du dialogue
+    public GameObject dialogueBox; // Référence à la boîte de dialogue
+
+    // Affiche un message
+    public void ShowDialogue(string message)
+    {
+        dialogueBox.SetActive(true); // Affiche la boîte de dialogue
+        dialogueText.text = message; // Met à jour le texte
+    }
+
+    // Cache le message
+    public void HideDialogue()
+    {
+        dialogueBox.SetActive(false); // Cache la boîte de dialogue
+    }
+}
