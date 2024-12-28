@@ -1,0 +1,38 @@
+using System.Collections.Generic;
+
+public class CharacterEquipment
+{
+    private Dictionary<string, Item> equippedItems = new Dictionary<string, Item>()
+    {
+        { "Casque", null },
+        { "Torse", null },
+        { "Jambiere", null },
+        { "Arme", null },
+        { "Bottes", null }
+    };
+
+    public void EquipItem(string slotType, Item item)
+    {
+        if (equippedItems.ContainsKey(slotType))
+        {
+            equippedItems[slotType] = item;
+        }
+    }
+
+    public void UnequipItem(string slotType)
+    {
+        if (equippedItems.ContainsKey(slotType))
+        {
+            equippedItems[slotType] = null;
+        }
+    }
+
+    public Item GetEquippedItem(string slotType)
+    {
+        if (equippedItems.ContainsKey(slotType))
+        {
+            return equippedItems[slotType];
+        }
+        return null;
+    }
+}
