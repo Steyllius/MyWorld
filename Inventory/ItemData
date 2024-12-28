@@ -1,0 +1,15 @@
+using UnityEngine;
+
+public class ItemData : MonoBehaviour
+{
+    public string itemName; // Nom de l'item
+    public Sprite itemIcon; // Icône de l'item
+    public ItemType itemType; // Type général de l'item (équipement, ressource, etc.)
+    public string validSlot; // Le type de slot où cet item peut être équipé (par exemple, "Arme", "Casque")
+    public int quantity = 1; // Quantité (par défaut 1)
+
+    public Item GetItem()
+    {
+        return new Item(itemName, itemIcon, itemType, quantity);
+    }
+}
