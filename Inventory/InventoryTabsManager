@@ -1,0 +1,29 @@
+using UnityEngine;
+
+public class InventoryTabsManager : MonoBehaviour
+{
+    public GameObject equipmentPanel;
+    public GameObject resourcesPanel;
+    public GameObject questsPanel;
+
+    public void ShowEquipment()
+    {
+        equipmentPanel.SetActive(true);
+        resourcesPanel.SetActive(false);
+        questsPanel.SetActive(false);
+    }
+
+    public void ShowResources()
+    {
+        equipmentPanel.SetActive(false);
+        resourcesPanel.SetActive(true);
+        questsPanel.SetActive(false);
+    }
+
+    public void ShowQuests()
+    {
+        equipmentPanel.SetActive(false);
+        resourcesPanel.SetActive(false);
+        questsPanel.SetActive(true);
+    }
+}
