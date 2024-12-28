@@ -1,0 +1,19 @@
+using UnityEngine;
+
+public enum ItemType { Equipment, Resource, QuestItem }
+
+public class Item
+{
+    public string itemName;
+    public Sprite itemIcon;
+    public ItemType itemType;
+    public int quantity;
+
+    public Item(string itemName, Sprite itemIcon, ItemType itemType, int quantity = 1)
+    {
+        this.itemName = itemName;
+        this.itemIcon = itemIcon;
+        this.itemType = itemType;
+        this.quantity = quantity;
+    }
+}
