@@ -21,16 +21,17 @@ public class InventoryUI : MonoBehaviour
     {
         Debug.Log("Mise à jour de l'UI de l'inventaire");
 
-        // Vide les Grids correspondants
+        // Vider les grilles existantes
         ClearGrid(equipmentGrid);
         ClearGrid(resourcesGrid);
         ClearGrid(questsGrid);
 
-        // Ajoute chaque objet de l'inventaire à la grille correspondante
+        // Parcourir les items de l'inventaire
         foreach (Item item in inventory.items)
         {
             Transform targetGrid = null;
 
+            // Déterminer la grille cible en fonction du type d'item
             switch (item.itemType)
             {
                 case ItemType.Equipment:
@@ -46,16 +47,43 @@ public class InventoryUI : MonoBehaviour
 
             if (targetGrid != null)
             {
+                // Instancier le préfabriqué de l'item dans la grille appropriée
                 GameObject newItem = Instantiate(itemPrefab, targetGrid);
                 Image itemImage = newItem.GetComponent<Image>();
                 TextMeshProUGUI itemText = newItem.GetComponentInChildren<TextMeshProUGUI>();
 
+                // Assigner l'icône et la quantité de l'item
                 if (itemImage != null) itemImage.sprite = item.itemIcon;
                 if (itemText != null) itemText.text = item.quantity.ToString();
+
+                // Ajouter un événement de clic pour équiper l'item si c'est un équipement
+                if (item.itemType == ItemType.Equipment)
+                {
+                    Button itemButton = newItem.GetComponent<Button>();
+                    if (itemButton != null)
+                    {
+                        itemButton.onClick.AddListener(() => OnInventoryItemClick(item));
+                    }
+                }
             }
         }
     }
 
+    void OnInventoryItemClick(Item item)
+    {
+        Debug.Log($"Item cliqué : {item.itemName}");
+
+        if (item.itemType == ItemType.Equipment)
+        {
+            // Appeler la méthode pour équiper l'item via EquipmentManager
+            EquipmentManager.instance.Equip(item);
+            Debug.Log($"{item.itemName} équipé via EquipmentManager.");
+        }
+        else
+        {
+            Debug.Log("Cet objet ne peut pas être équipé.");
+        }
+    }
     private void ClearGrid(Transform grid)
     {
         foreach (Transform child in grid)
